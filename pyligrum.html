@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pyligrum</title>
+    <style>
+        :root {
+            --blur: 20px;
+            --opacity: 0.10;
+            --bg-color: #1a1a2e;
+            --primary: #ffffff;
+            --accent: #a5b4fc;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            color: var(--primary);
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .app-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 30%, var(--bg-color), #000000);
+            display: flex;
+            flex-direction: column;
+            transition: background 0.5s ease;
+        }
+
+        /* Декор фона */
+        .app-container::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 50%;
+            height: 50%;
+            background: var(--accent);
+            opacity: 0.2;
+            filter: blur(80px);
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .app-container::after {
+            content: '';
+            position: absolute;
+            bottom: -10%;
+            right: -10%;
+            width: 60%;
+            height: 60%;
+            background: var(--bg-color);
+            filter: brightness(1.5) blur(90px);
+            opacity: 0.3;
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .glass-base {
+            background: rgba(255, 255, 255, var(--opacity));
+            backdrop-filter: blur(var(--blur)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+
+        header {
+            padding: 40px 20px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .logo { font-size: 24px; font-weight: 700; letter-spacing: -1px; }
+        
+        .settings-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .settings-btn:active { transform: scale(0.95); }
+
+        .main-content {
+            flex-grow: 1;
+            position: relative;
+            padding: 20px;
+            z-index: 5;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0; left: 20px; right: 20px; bottom: 40px;
+            border-radius: 30px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .screen.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        /* Стили для профиля и авторизации */
+        .auth-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+        }
+
+        .google-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .google-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .logout-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            border-radius: 12px;
+            background: rgba(255, 59, 48, 0.2);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            cursor: pointer;
+        }
+
+        /* Навигация */
+        nav {
+            position: relative;
+            height: 80px;
+            margin: 0 20px 30px;
+            border-radius: 25px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .nav-indicator {
+            position: absolute;
+            top: 50%;
+            left: 16.66%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 0;
+            transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: 0.3s;
+            width: 33%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-item.active {
+            opacity: 1;
+            transform: translateY(-5px);
+            color: var(--accent);
+        }
+        
+        .nav-item.active .icon {
+            stroke: var(--accent);
+            filter: drop-shadow(0 0 5px var(--accent));
+        }
+
+        .nav-text { font-size: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+
+        /* Панель настроек */
+        .settings-panel {
+            position: fixed;
+            top: 0; right: -100%;
+            width: 85%;
+            max-width: 400px;
+            height: 100%;
+            z-index: 100;
+            padding: 60px 30px;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+            background: rgba(20, 20, 25, 0.85);
+        }
+
+        .settings-panel.open { right: 0; }
+
+        .close-settings {
+            position: absolute; top: 25px; left: 25px;
+            background: none; border: none; color: white; 
+            cursor: pointer; padding: 5px;
+        }
+
+        .control-group { margin-bottom: 35px; }
+        label { display: block; margin-bottom: 15px; font-size: 14px; opacity: 0.8; font-weight: 600; }
+        
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            background: none;
+            cursor: pointer;
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { 
+            border: 1px solid rgba(255,255,255,0.2); 
+            border-radius: 12px; 
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <div class="logo">Pyligrum</div>
+        <div class="settings-btn glass-base" onclick="window.toggleSettings()">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div id="home" class="screen glass-base active">
+            <h1>Дом</h1>
+            <p>Добро пожаловать в Pyligrum.</p>
+        </div>
+
+        <div id="info" class="screen glass-base">
+            <h1>Инфо</h1>
+            <p>Приложение с эффектом жидкого стекла и интеграцией Firebase Auth.</p>
+        </div>
+
+        <div id="profile" class="screen glass-base">
+            <div id="profile-loading">
+                <p>Загрузка...</p>
+            </div>
+
+            <div id="profile-logged-out" class="auth-container" style="display: none;">
+                <h1>Вход</h1>
+                <p>Войдите, чтобы получить доступ к профилю.</p>
+                <button id="google-login-btn" class="glass-base google-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    Войти через Google
+                </button>
+            </div>
+
+            <div id="profile-logged-in" class="auth-container" style="display: none;">
+                <div id="user-photo" class="user-avatar glass-base"></div>
+                <h2 id="user-name">Имя пользователя</h2>
+                <p id="user-email" style="font-size: 12px; opacity: 0.7;">email@example.com</p>
+                <div style="margin-top: 10px; font-size: 14px; opacity: 0.8;">Статус: <span style="color: var(--accent);">Explorer</span></div>
+                
+                <button id="logout-btn" class="logout-btn">Выйти из аккаунта</button>
+            </div>
+        </div>
+    </main>
+
+    <nav class="glass-base">
+        <div class="nav-indicator"></div>
+
+        <div class="nav-item active" onclick="window.showScreen('home', this)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span class="nav-text">Дом</span>
+        </div>
+        <div class="nav-item" onclick="window.showScreen('info', this)">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <span class="nav-text">Инфо</span>
+        </div>
+        <div class="nav-item" onclick="window.showScreen('profile', this)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="nav-text">Профиль</span>
+        </div>
+    </nav>
+
+    <div id="settings" class="settings-panel glass-base">
+        <button class="close-settings" onclick="window.toggleSettings()">
+            <svg class="icon" style="width: 30px; height: 30px;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <h2>Настройки</h2>
+        
+        <div class="control-group">
+            <label>Размытие стекла</label>
+            <input type="range" min="0" max="40" value="20" oninput="window.updateVar('--blur', this.value + 'px')">
+        </div>
+
+        <div class="control-group">
+            <label>Прозрачность</label>
+            <input type="range" min="0.0" max="0.4" step="0.01" value="0.10" oninput="window.updateVar('--opacity', this.value)">
+        </div>
+
+        <div class="control-group">
+            <label>Цвет фона</label>
+            <input type="color" value="#1a1a2e" oninput="window.updateVar('--bg-color', this.value)">
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    // Импорт функций из CDN (без сборщика)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    // Твой конфиг
+    const firebaseConfig = {
+      apiKey: "AIzaSyAphXmALS1zqh53aF8XiZ9yKKsGUSMmBJE",
+      authDomain: "pyligrum.firebaseapp.com",
+      projectId: "pyligrum",
+      storageBucket: "pyligrum.firebasestorage.app",
+      messagingSenderId: "438927084849",
+      appId: "1:438927084849:web:f3a18ec95c733e009cf410",
+      measurementId: "G-G2W3JHCTRV"
+    };
+
+    // Инициализация
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    // Элементы UI
+    const loadingDiv = document.getElementById('profile-loading');
+    const loggedOutDiv = document.getElementById('profile-logged-out');
+    const loggedInDiv = document.getElementById('profile-logged-in');
+    
+    const userName = document.getElementById('user-name');
+    const userEmail = document.getElementById('user-email');
+    const userPhoto = document.getElementById('user-photo');
+
+    const btnLogin = document.getElementById('google-login-btn');
+    const btnLogout = document.getElementById('logout-btn');
+
+    // Логика входа
+    btnLogin.addEventListener('click', () => {
+        signInWithPopup(auth, provider)
+            .then((result) => {
+                // Успешный вход, onAuthStateChanged сработает сам
+                console.log("Logged in:", result.user);
+            }).catch((error) => {
+                console.error("Login error:", error);
+                alert("Ошибка входа: " + error.message);
+            });
+    });
+
+    // Логика выхода
+    btnLogout.addEventListener('click', () => {
+        signOut(auth).then(() => {
+            console.log("Signed out");
+        });
+    });
+
+    // Слушатель состояния (Вошел/Не вошел)
+    onAuthStateChanged(auth, (user) => {
+        loadingDiv.style.display = 'none'; // Скрываем загрузку
+        
+        if (user) {
+            // Пользователь вошел
+            loggedOutDiv.style.display = 'none';
+            loggedInDiv.style.display = 'flex';
+            
+            // Заполняем данные
+            userName.textContent = user.displayName;
+            userEmail.textContent = user.email;
+            if (user.photoURL) {
+                userPhoto.style.backgroundImage = `url('${user.photoURL}')`;
+            }
+        } else {
+            // Пользователь вышел
+            loggedInDiv.style.display = 'none';
+            loggedOutDiv.style.display = 'flex';
+        }
+    });
+</script>
+
+<script>
+    // Делаем функции глобальными, чтобы работали onclick в HTML
+    window.showScreen = function(screenId, element) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(i => i.classList.remove('active'));
+        element.classList.add('active');
+
+        const index = Array.from(navItems).indexOf(element);
+        const positions = ['16.66%', '50%', '83.33%'];
+        document.querySelector('.nav-indicator').style.left = positions[index];
+    }
+
+    window.toggleSettings = function() {
+        document.getElementById('settings').classList.toggle('open');
+    }
+
+    window.updateVar = function(name, value) {
+        document.documentElement.style.setProperty(name, value);
+    }
+</script>
+
+</body>
+</html>
