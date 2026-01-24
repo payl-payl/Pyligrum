@@ -188,7 +188,7 @@
             padding: 15px;
             border: 1px solid rgba(255,255,255,0.05);
             position: relative;
-            cursor: pointer; /* Делаем курсор пальцем */
+            cursor: pointer;
             transition: transform 0.2s, background 0.2s;
         }
         
@@ -209,18 +209,27 @@
             border-radius: 50%;
             background: #555;
             background-size: cover;
-            flex-shrink: 0; /* Чтобы аватар не сжимался */
+            flex-shrink: 0;
         }
 
         .post-author { font-size: 14px; font-weight: 600; }
-        .post-cat { font-size: 11px; opacity: 0.6; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: auto;}
+        
+        /* ИСПРАВЛЕНИЕ: Добавил отступ справа, чтобы не наезжало на кнопку удаления и край */
+        .post-cat { 
+            font-size: 11px; 
+            opacity: 0.6; 
+            background: rgba(255,255,255,0.1); 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            margin-left: auto;
+            margin-right: 35px; /* Сдвиг влево */
+        }
         
         .post-title { 
             font-size: 18px; 
             font-weight: 700; 
             margin-bottom: 5px; 
             color: var(--accent); 
-            /* Если заголовок слишком длинный */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -230,14 +239,10 @@
             font-size: 14px; 
             opacity: 0.9; 
             line-height: 1.4; 
-            
-            /* --- ИСПРАВЛЕНИЕ ТЕКСТА --- */
-            white-space: pre-wrap; /* Сохраняет абзацы */
-            word-wrap: break-word; /* Ломает длинные слова */
-            overflow-wrap: break-word; /* Современный аналог */
-            word-break: break-word; /* Жесткий перенос для очень длинных строк */
-            
-            /* Обрезка до 4 строк в превью */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
             display: -webkit-box;
             -webkit-line-clamp: 4;
             -webkit-box-orient: vertical;
@@ -245,15 +250,17 @@
             text-overflow: ellipsis;
         }
 
+        /* ИСПРАВЛЕНИЕ: Кнопка удаления сдвинута внутрь карточки */
         .delete-post-btn {
             position: absolute;
-            top: 15px; right: -5px;
+            top: 15px;    /* Было 15px */
+            right: 15px;  /* Было -5px, теперь выровнено по паддингу */
             background: none; border: none;
             color: #ff6b6b;
             cursor: pointer;
-            padding: 5px;
+            padding: 0;
             opacity: 0.7;
-            z-index: 2; /* Чтобы кнопка была поверх карточки */
+            z-index: 2;
         }
 
         /* FAB Кнопка добавления */
@@ -306,7 +313,7 @@
             transform: translateY(100%);
             transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
             border: 1px solid rgba(255,255,255,0.1);
-            max-height: 85vh; /* Чтобы не уходило за экран */
+            max-height: 85vh;
             display: flex;
             flex-direction: column;
         }
@@ -359,7 +366,7 @@
             border: none;
             font-size: 16px;
             cursor: pointer;
-            margin-top: auto; /* Прижать к низу */
+            margin-top: auto;
         }
         
         .btn-close-view {
@@ -367,8 +374,6 @@
             color: white;
             margin-top: 10px;
         }
-
-        /* --- Конец новых стилей --- */
 
         /* Стили для профиля и авторизации */
         .auth-container {
@@ -389,7 +394,7 @@
             border: 2px solid rgba(255,255,255,0.3);
             box-shadow: 0 0 20px rgba(0,0,0,0.2);
             margin-bottom: 10px;
-            background-color: #333; /* Fallback */
+            background-color: #333;
         }
 
         .google-btn {
@@ -616,17 +621,17 @@
         
         <div class="control-group">
             <label>Размытие стекла</label>
-            <input type="range" min="0" max="40" value="20" oninput="window.updateVar('--blur', this.value + 'px')">
+            <input type="range" id="blur-input" min="0" max="40" value="20" oninput="window.updateSetting('blur', this.value, true)">
         </div>
 
         <div class="control-group">
             <label>Прозрачность</label>
-            <input type="range" min="0.0" max="0.4" step="0.01" value="0.10" oninput="window.updateVar('--opacity', this.value)">
+            <input type="range" id="opacity-input" min="0.0" max="0.4" step="0.01" value="0.10" oninput="window.updateSetting('opacity', this.value, true)">
         </div>
 
         <div class="control-group">
             <label>Цвет фона</label>
-            <input type="color" value="#1a1a2e" oninput="window.updateVar('--bg-color', this.value)">
+            <input type="color" id="color-input" value="#1a1a2e" oninput="window.updateSetting('color', this.value, true)">
         </div>
     </div>
     
@@ -774,6 +779,9 @@
         const postsRef = collection(db, "posts");
         let q;
 
+        // ЛОГИКА ФИЛЬТРАЦИИ:
+        // Если выбрано "Все", берем все посты.
+        // Если выбрана конкретная категория, добавляем фильтр where
         if (category === "Все") {
             q = query(postsRef, orderBy("timestamp", "desc"));
         } else {
@@ -784,7 +792,7 @@
             postsContainer.innerHTML = '';
             
             if (snapshot.empty) {
-                postsContainer.innerHTML = '<div style="text-align:center; padding: 20px; opacity:0.6;">В этой категории пока нет идей. Будь первым!</div>';
+                postsContainer.innerHTML = `<div style="text-align:center; padding: 40px; opacity: 0.5;">В категории "${category}" пока ничего нет</div>`;
                 return;
             }
 
@@ -792,19 +800,16 @@
                 const post = docSnap.data();
                 const postId = docSnap.id;
                 
-                // Сохраняем данные поста в кэш для открытия
                 window.postsCache[postId] = post;
                 
                 const isOwner = currentUser && currentUser.uid === post.userId;
                 
-                // Добавляем event.stopPropagation() чтобы клик по корзине не открывал пост
                 const deleteBtn = isOwner 
                     ? `<button class="delete-post-btn" onclick="event.stopPropagation(); window.deletePost('${postId}')">
                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                        </button>` 
                     : '';
 
-                // Добавляем onclick на саму карточку
                 const html = `
                     <div class="post-card" onclick="window.viewPost('${postId}')">
                         <div class="post-header">
@@ -820,11 +825,13 @@
                 postsContainer.insertAdjacentHTML('beforeend', html);
             });
         }, (error) => {
-            console.error("Error fetching posts:", error);
+            console.error("Ошибка загрузки:", error);
+            if (error.code === 'failed-precondition') {
+                postsContainer.innerHTML = '<div style="padding:20px; color:#ffa500; font-size:12px;">Нужно создать индекс в консоли Firebase (проверь консоль браузера F12, там будет ссылка).</div>';
+            }
         });
     }
-    
-    loadPosts("Все");
+                
 
     // Создание поста
     postForm.addEventListener('submit', async (e) => {
@@ -889,9 +896,49 @@
         document.getElementById('settings').classList.toggle('open');
     }
 
-    window.updateVar = function(name, value) {
-        document.documentElement.style.setProperty(name, value);
+    // --- ЛОГИКА СОХРАНЕНИЯ НАСТРОЕК ---
+    
+    // Применение настройки
+    window.updateSetting = function(type, value, saveToStorage) {
+        let cssVar, suffix = '';
+        if (type === 'blur') { cssVar = '--blur'; suffix = 'px'; }
+        if (type === 'opacity') { cssVar = '--opacity'; }
+        if (type === 'color') { cssVar = '--bg-color'; }
+        
+        // Применяем CSS
+        document.documentElement.style.setProperty(cssVar, value + suffix);
+        
+        // Сохраняем в память
+        if (saveToStorage) {
+            localStorage.setItem('settings_' + type, value);
+        }
     }
+
+    // Загрузка настроек при старте
+    window.loadSettings = function() {
+        const savedBlur = localStorage.getItem('settings_blur');
+        const savedOpacity = localStorage.getItem('settings_opacity');
+        const savedColor = localStorage.getItem('settings_color');
+
+        if (savedBlur) {
+            document.getElementById('blur-input').value = savedBlur;
+            window.updateSetting('blur', savedBlur, false);
+        }
+        if (savedOpacity) {
+            document.getElementById('opacity-input').value = savedOpacity;
+            window.updateSetting('opacity', savedOpacity, false);
+        }
+        if (savedColor) {
+            document.getElementById('color-input').value = savedColor;
+            window.updateSetting('color', savedColor, false);
+        }
+    }
+
+    // Вызываем загрузку сразу
+    window.loadSettings();
+    
+    // --- Конец логики настроек ---
+
     
     // Управление модальными окнами (универсальное)
     window.openCreateModal = function() {
