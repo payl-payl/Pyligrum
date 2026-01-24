@@ -116,22 +116,21 @@
             position: relative;
             padding: 20px;
             z-index: 5;
+            overflow: hidden; /* Важно для скролла внутри экранов */
         }
 
         .screen {
             position: absolute;
-            top: 0; left: 20px; right: 20px; bottom: 40px;
+            top: 0; left: 20px; right: 20px; bottom: 10px;
             border-radius: 30px;
-            padding: 30px;
+            /* padding убрал здесь, добавил внутрь для скролла */
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
             opacity: 0;
             transform: scale(0.9);
             pointer-events: none;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden; 
         }
 
         .screen.active {
@@ -139,6 +138,175 @@
             transform: scale(1);
             pointer-events: auto;
         }
+        
+        /* Внутренний контейнер для скролла */
+        .screen-content {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 20px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .screen-content::-webkit-scrollbar { display: none; }
+
+        /* --- Стили для ленты и постов --- */
+        .categories-wrapper {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            scrollbar-width: none;
+        }
+        .categories-wrapper::-webkit-scrollbar { display: none; }
+
+        .category-chip {
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .category-chip.active {
+            background: var(--accent);
+            color: #000;
+            font-weight: 600;
+            border-color: var(--accent);
+        }
+
+        .posts-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding-bottom: 80px; /* Место под кнопку */
+        }
+
+        .post-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .post-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: #555;
+            background-size: cover;
+        }
+
+        .post-author { font-size: 14px; font-weight: 600; }
+        .post-cat { font-size: 11px; opacity: 0.6; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: auto;}
+        
+        .post-title { font-size: 18px; font-weight: 700; margin-bottom: 5px; color: var(--accent); }
+        .post-desc { font-size: 14px; opacity: 0.9; line-height: 1.4; white-space: pre-wrap; }
+
+        .delete-post-btn {
+            position: absolute;
+            top: 15px; right: -5px;
+            background: none; border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            padding: 5px;
+            opacity: 0.7;
+        }
+
+        /* FAB Кнопка добавления */
+        .fab-add {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            cursor: pointer;
+            z-index: 20;
+            transition: transform 0.2s;
+        }
+        .fab-add:active { transform: scale(0.9); }
+
+        /* Модальное окно создания поста */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* Снизу вверх */
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.3s;
+        }
+        
+        .modal-overlay.open {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 500px;
+            background: #1e1e24;
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            padding: 30px 20px;
+            transform: translateY(100%);
+            transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-size: 14px; opacity: 0.7; }
+        
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 16px;
+        }
+        
+        .form-select option { background: #1e1e24; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            border-radius: 15px;
+            background: var(--accent);
+            color: #000;
+            font-weight: bold;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* --- Конец новых стилей --- */
 
         /* Стили для профиля и авторизации */
         .auth-container {
@@ -147,6 +315,7 @@
             flex-direction: column;
             align-items: center;
             gap: 20px;
+            padding-top: 40px;
         }
 
         .user-avatar {
@@ -158,6 +327,7 @@
             border: 2px solid rgba(255,255,255,0.3);
             box-shadow: 0 0 20px rgba(0,0,0,0.2);
             margin-bottom: 10px;
+            background-color: #333; /* Fallback */
         }
 
         .google-btn {
@@ -305,36 +475,56 @@
 
     <main class="main-content">
         <div id="home" class="screen glass-base active">
-            <h1>Дом</h1>
-            <p>Добро пожаловать в Pyligrum.</p>
+            <div class="screen-content">
+                <div class="header-area" style="margin-bottom: 20px;">
+                    <h1>Идеи</h1>
+                    <p style="opacity: 0.7;">Вдохновение для создателей</p>
+                </div>
+
+                <div class="categories-wrapper" id="category-filters">
+                    </div>
+
+                <div class="posts-feed" id="posts-feed">
+                    <div style="text-align:center; padding: 40px; opacity: 0.5;">Загрузка идей...</div>
+                </div>
+            </div>
+
+            <div class="fab-add" onclick="window.openCreateModal()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
         </div>
 
         <div id="info" class="screen glass-base">
-            <h1>Инфо</h1>
-            <p>Приложение с эффектом жидкого стекла и интеграцией Firebase Auth.</p>
+            <div class="screen-content" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+                <h1>Инфо</h1>
+                <p>Приложение с эффектом жидкого стекла и интеграцией Firebase Auth.</p>
+                <p>Создано для дизайнеров и художников.</p>
+            </div>
         </div>
 
         <div id="profile" class="screen glass-base">
-            <div id="profile-loading">
-                <p>Загрузка...</p>
-            </div>
+            <div class="screen-content">
+                <div id="profile-loading" style="text-align: center; margin-top: 50px;">
+                    <p>Загрузка...</p>
+                </div>
 
-            <div id="profile-logged-out" class="auth-container" style="display: none;">
-                <h1>Вход</h1>
-                <p>Войдите, чтобы получить доступ к профилю.</p>
-                <button id="google-login-btn" class="glass-base google-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                    Войти через Google
-                </button>
-            </div>
+                <div id="profile-logged-out" class="auth-container" style="display: none;">
+                    <h1>Вход</h1>
+                    <p style="text-align: center; opacity: 0.8;">Войдите, чтобы публиковать свои идеи и управлять ими.</p>
+                    <button id="google-login-btn" class="glass-base google-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                        Войти через Google
+                    </button>
+                </div>
 
-            <div id="profile-logged-in" class="auth-container" style="display: none;">
-                <div id="user-photo" class="user-avatar glass-base"></div>
-                <h2 id="user-name">Имя пользователя</h2>
-                <p id="user-email" style="font-size: 12px; opacity: 0.7;">email@example.com</p>
-                <div style="margin-top: 10px; font-size: 14px; opacity: 0.8;">Статус: <span style="color: var(--accent);">Explorer</span></div>
-                
-                <button id="logout-btn" class="logout-btn">Выйти из аккаунта</button>
+                <div id="profile-logged-in" class="auth-container" style="display: none;">
+                    <div id="user-photo" class="user-avatar glass-base"></div>
+                    <h2 id="user-name">Имя пользователя</h2>
+                    <p id="user-email" style="font-size: 12px; opacity: 0.7;">email@example.com</p>
+                    <div style="margin-top: 10px; font-size: 14px; opacity: 0.8;">Статус: <span style="color: var(--accent);">Explorer</span></div>
+                    
+                    <button id="logout-btn" class="logout-btn">Выйти из аккаунта</button>
+                </div>
             </div>
         </div>
     </main>
@@ -377,12 +567,42 @@
             <input type="color" value="#1a1a2e" oninput="window.updateVar('--bg-color', this.value)">
         </div>
     </div>
+    
+    <div id="create-post-modal" class="modal-overlay" onclick="window.closeCreateModal(event)">
+        <div class="modal-content glass-base">
+            <h2 style="margin-top:0">Новая идея</h2>
+            <form id="create-post-form">
+                <div class="form-group">
+                    <label class="form-label">Заголовок</label>
+                    <input type="text" id="post-title" class="form-input" placeholder="Суть идеи..." required maxlength="40">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Категория</label>
+                    <select id="post-category" class="form-select">
+                        <option value="Художество">Художество</option>
+                        <option value="Одежда">Одежда</option>
+                        <option value="Мебель">Мебель</option>
+                        <option value="UI/UX Дизайн">UI/UX Дизайн</option>
+                        <option value="Типографика">Типографика</option>
+                        <option value="Архитектура">Архитектура</option>
+                        <option value="3D Моделирование">3D Моделирование</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Описание</label>
+                    <textarea id="post-desc" class="form-textarea" rows="4" placeholder="Опиши детали..." required></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Опубликовать</button>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script type="module">
-    // Импорт функций из CDN (без сборщика)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    // Импорт Firestore
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // Твой конфиг
     const firebaseConfig = {
@@ -395,67 +615,195 @@
       measurementId: "G-G2W3JHCTRV"
     };
 
-    // Инициализация
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    // Элементы UI
+    // --- Переменные UI ---
     const loadingDiv = document.getElementById('profile-loading');
     const loggedOutDiv = document.getElementById('profile-logged-out');
     const loggedInDiv = document.getElementById('profile-logged-in');
-    
     const userName = document.getElementById('user-name');
     const userEmail = document.getElementById('user-email');
     const userPhoto = document.getElementById('user-photo');
-
     const btnLogin = document.getElementById('google-login-btn');
     const btnLogout = document.getElementById('logout-btn');
 
-    // Логика входа
+    let currentUser = null; // Храним текущего юзера глобально для модуля
+
+    // --- Авторизация ---
     btnLogin.addEventListener('click', () => {
         signInWithPopup(auth, provider)
-            .then((result) => {
-                // Успешный вход, onAuthStateChanged сработает сам
-                console.log("Logged in:", result.user);
-            }).catch((error) => {
-                console.error("Login error:", error);
-                alert("Ошибка входа: " + error.message);
-            });
+            .then((result) => console.log("Logged in"))
+            .catch((error) => alert("Ошибка входа: " + error.message));
     });
 
-    // Логика выхода
     btnLogout.addEventListener('click', () => {
-        signOut(auth).then(() => {
-            console.log("Signed out");
-        });
+        signOut(auth).then(() => console.log("Signed out"));
     });
 
-    // Слушатель состояния (Вошел/Не вошел)
     onAuthStateChanged(auth, (user) => {
-        loadingDiv.style.display = 'none'; // Скрываем загрузку
-        
+        loadingDiv.style.display = 'none';
+        currentUser = user; // Обновляем состояние
+
         if (user) {
-            // Пользователь вошел
             loggedOutDiv.style.display = 'none';
             loggedInDiv.style.display = 'flex';
-            
-            // Заполняем данные
             userName.textContent = user.displayName;
             userEmail.textContent = user.email;
             if (user.photoURL) {
                 userPhoto.style.backgroundImage = `url('${user.photoURL}')`;
             }
         } else {
-            // Пользователь вышел
             loggedInDiv.style.display = 'none';
             loggedOutDiv.style.display = 'flex';
+            userPhoto.style.backgroundImage = 'none';
+        }
+        
+        // Перерисовываем посты, чтобы обновить кнопки удаления (свои/чужие)
+        loadPosts(currentCategory); 
+    });
+
+    // --- Логика ПОСТОВ (Firestore) ---
+    
+    // Категории
+    const categories = ["Все", "Художество", "Одежда", "Мебель", "UI/UX Дизайн", "Типографика", "Архитектура", "3D Моделирование"];
+    let currentCategory = "Все";
+    const filtersContainer = document.getElementById('category-filters');
+    const postsContainer = document.getElementById('posts-feed');
+    const postForm = document.getElementById('create-post-form');
+
+    // Рендер кнопок категорий
+    function renderFilters() {
+        filtersContainer.innerHTML = '';
+        categories.forEach(cat => {
+            const btn = document.createElement('div');
+            btn.className = `category-chip ${cat === currentCategory ? 'active' : ''}`;
+            btn.textContent = cat;
+            btn.onclick = () => {
+                currentCategory = cat;
+                renderFilters();
+                loadPosts(currentCategory);
+            };
+            filtersContainer.appendChild(btn);
+        });
+    }
+    renderFilters();
+
+    // Загрузка постов в реальном времени
+    let unsubscribe = null;
+
+    function loadPosts(category) {
+        if (unsubscribe) unsubscribe(); // Отписываемся от предыдущего слушателя
+
+        const postsRef = collection(db, "posts");
+        let q;
+
+        if (category === "Все") {
+            q = query(postsRef, orderBy("timestamp", "desc"));
+        } else {
+            // Для фильтрации может потребоваться индекс в Firebase Console, если сортируем и фильтруем одновременно
+            // Пока сделаем простую фильтрацию на клиенте или через составной запрос, если создашь индекс.
+            // Чтобы не усложнять сейчас, используем where. *Возможно потребуется создать индекс по ссылке в ошибке консоли*
+            q = query(postsRef, where("category", "==", category), orderBy("timestamp", "desc"));
+        }
+
+        unsubscribe = onSnapshot(q, (snapshot) => {
+            postsContainer.innerHTML = '';
+            
+            if (snapshot.empty) {
+                postsContainer.innerHTML = '<div style="text-align:center; padding: 20px; opacity:0.6;">В этой категории пока нет идей. Будь первым!</div>';
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const post = docSnap.data();
+                const postId = docSnap.id;
+                
+                // Проверяем, владелец ли текущий юзер
+                const isOwner = currentUser && currentUser.uid === post.userId;
+                
+                const deleteBtn = isOwner 
+                    ? `<button class="delete-post-btn" onclick="window.deletePost('${postId}')">
+                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                       </button>` 
+                    : '';
+
+                const html = `
+                    <div class="post-card">
+                        <div class="post-header">
+                            <div class="post-avatar" style="background-image: url('${post.userPhoto || ''}')"></div>
+                            <div class="post-author">${post.userName}</div>
+                            <div class="post-cat">${post.category}</div>
+                        </div>
+                        ${deleteBtn}
+                        <div class="post-title">${post.title}</div>
+                        <div class="post-desc">${post.description}</div>
+                    </div>
+                `;
+                postsContainer.insertAdjacentHTML('beforeend', html);
+            });
+        }, (error) => {
+            console.error("Error fetching posts:", error);
+            // Если ошибка requires an index, выводим в консоль
+            if(error.code === 'failed-precondition') {
+                 console.log("Требуется создание индекса в Firebase. Проверь ссылку в консоли.");
+            }
+        });
+    }
+    
+    // Инициализация загрузки
+    loadPosts("Все");
+
+    // Создание поста
+    postForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!currentUser) {
+            alert("Пожалуйста, войдите в аккаунт (в профиле), чтобы публиковать идеи.");
+            return;
+        }
+
+        const title = document.getElementById('post-title').value;
+        const category = document.getElementById('post-category').value;
+        const desc = document.getElementById('post-desc').value;
+
+        try {
+            await addDoc(collection(db, "posts"), {
+                title: title,
+                category: category,
+                description: desc,
+                userId: currentUser.uid,
+                userName: currentUser.displayName || "Аноним",
+                userPhoto: currentUser.photoURL,
+                timestamp: serverTimestamp()
+            });
+            
+            // Сброс формы и закрытие
+            postForm.reset();
+            window.closeCreateModal();
+            
+        } catch (err) {
+            console.error("Error adding post: ", err);
+            alert("Ошибка публикации: " + err.message);
         }
     });
+
+    // Функция удаления (глобальная, чтобы вызвать из HTML строки)
+    window.deletePost = async (id) => {
+        if(!confirm("Удалить эту идею?")) return;
+        try {
+            await deleteDoc(doc(db, "posts", id));
+        } catch(err) {
+            alert("Ошибка удаления: " + err.message);
+        }
+    }
+
 </script>
 
 <script>
-    // Делаем функции глобальными, чтобы работали onclick в HTML
+    // Глобальные функции UI
     window.showScreen = function(screenId, element) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
@@ -475,6 +823,17 @@
 
     window.updateVar = function(name, value) {
         document.documentElement.style.setProperty(name, value);
+    }
+    
+    // Модальное окно
+    window.openCreateModal = function() {
+        document.getElementById('create-post-modal').classList.add('open');
+    }
+    
+    window.closeCreateModal = function(e) {
+        // Если передан event, проверяем клик по фону. Если нет - просто закрываем
+        if (e && e.target !== e.currentTarget) return;
+        document.getElementById('create-post-modal').classList.remove('open');
     }
 </script>
 
