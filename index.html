@@ -116,14 +116,13 @@
             position: relative;
             padding: 20px;
             z-index: 5;
-            overflow: hidden; /* Важно для скролла внутри экранов */
+            overflow: hidden; 
         }
 
         .screen {
             position: absolute;
             top: 0; left: 20px; right: 20px; bottom: 10px;
             border-radius: 30px;
-            /* padding убрал здесь, добавил внутрь для скролла */
             display: flex;
             flex-direction: column;
             opacity: 0;
@@ -139,13 +138,12 @@
             pointer-events: auto;
         }
         
-        /* Внутренний контейнер для скролла */
         .screen-content {
             width: 100%;
             height: 100%;
             overflow-y: auto;
             padding: 20px;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none; 
         }
         .screen-content::-webkit-scrollbar { display: none; }
 
@@ -181,7 +179,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            padding-bottom: 80px; /* Место под кнопку */
+            padding-bottom: 80px; 
         }
 
         .post-card {
@@ -190,6 +188,13 @@
             padding: 15px;
             border: 1px solid rgba(255,255,255,0.05);
             position: relative;
+            cursor: pointer; /* Делаем курсор пальцем */
+            transition: transform 0.2s, background 0.2s;
+        }
+        
+        .post-card:active {
+            transform: scale(0.98);
+            background: rgba(255,255,255,0.05);
         }
 
         .post-header {
@@ -204,13 +209,41 @@
             border-radius: 50%;
             background: #555;
             background-size: cover;
+            flex-shrink: 0; /* Чтобы аватар не сжимался */
         }
 
         .post-author { font-size: 14px; font-weight: 600; }
         .post-cat { font-size: 11px; opacity: 0.6; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: auto;}
         
-        .post-title { font-size: 18px; font-weight: 700; margin-bottom: 5px; color: var(--accent); }
-        .post-desc { font-size: 14px; opacity: 0.9; line-height: 1.4; white-space: pre-wrap; }
+        .post-title { 
+            font-size: 18px; 
+            font-weight: 700; 
+            margin-bottom: 5px; 
+            color: var(--accent); 
+            /* Если заголовок слишком длинный */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .post-desc { 
+            font-size: 14px; 
+            opacity: 0.9; 
+            line-height: 1.4; 
+            
+            /* --- ИСПРАВЛЕНИЕ ТЕКСТА --- */
+            white-space: pre-wrap; /* Сохраняет абзацы */
+            word-wrap: break-word; /* Ломает длинные слова */
+            overflow-wrap: break-word; /* Современный аналог */
+            word-break: break-word; /* Жесткий перенос для очень длинных строк */
+            
+            /* Обрезка до 4 строк в превью */
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         .delete-post-btn {
             position: absolute;
@@ -220,6 +253,7 @@
             cursor: pointer;
             padding: 5px;
             opacity: 0.7;
+            z-index: 2; /* Чтобы кнопка была поверх карточки */
         }
 
         /* FAB Кнопка добавления */
@@ -242,7 +276,7 @@
         }
         .fab-add:active { transform: scale(0.9); }
 
-        /* Модальное окно создания поста */
+        /* Модальные окна */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -251,7 +285,7 @@
             z-index: 1000;
             display: flex;
             justify-content: center;
-            align-items: flex-end; /* Снизу вверх */
+            align-items: flex-end; 
             visibility: hidden;
             opacity: 0;
             transition: 0.3s;
@@ -272,12 +306,33 @@
             transform: translateY(100%);
             transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
             border: 1px solid rgba(255,255,255,0.1);
+            max-height: 85vh; /* Чтобы не уходило за экран */
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-overlay.open .modal-content {
             transform: translateY(0);
         }
 
+        /* Стили для просмотра поста */
+        .view-scroll-area {
+            overflow-y: auto;
+            padding-right: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .view-title { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 10px; line-height: 1.2; word-wrap: break-word; }
+        .view-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; opacity: 0.7; font-size: 14px; }
+        .view-text { 
+            font-size: 16px; 
+            line-height: 1.6; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            overflow-wrap: break-word;
+        }
+
+        /* Формы */
         .form-group { margin-bottom: 20px; }
         .form-label { display: block; margin-bottom: 8px; font-size: 14px; opacity: 0.7; }
         
@@ -304,6 +359,13 @@
             border: none;
             font-size: 16px;
             cursor: pointer;
+            margin-top: auto; /* Прижать к низу */
+        }
+        
+        .btn-close-view {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            margin-top: 10px;
         }
 
         /* --- Конец новых стилей --- */
@@ -568,7 +630,7 @@
         </div>
     </div>
     
-    <div id="create-post-modal" class="modal-overlay" onclick="window.closeCreateModal(event)">
+    <div id="create-post-modal" class="modal-overlay" onclick="window.closeModal('create-post-modal', event)">
         <div class="modal-content glass-base">
             <h2 style="margin-top:0">Новая идея</h2>
             <form id="create-post-form">
@@ -596,12 +658,25 @@
             </form>
         </div>
     </div>
+
+    <div id="view-post-modal" class="modal-overlay" onclick="window.closeModal('view-post-modal', event)">
+        <div class="modal-content glass-base" style="height: 80vh;">
+            <div class="view-scroll-area">
+                <div id="view-title" class="view-title">Заголовок</div>
+                <div class="view-meta">
+                    <div id="view-author">Автор</div> • 
+                    <div id="view-category" style="color:var(--accent);">Категория</div>
+                </div>
+                <div id="view-desc" class="view-text">Описание...</div>
+            </div>
+            <button class="btn-submit btn-close-view" onclick="window.closeModal('view-post-modal', null)">Закрыть</button>
+        </div>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    // Импорт Firestore
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // Твой конфиг
@@ -630,7 +705,7 @@
     const btnLogin = document.getElementById('google-login-btn');
     const btnLogout = document.getElementById('logout-btn');
 
-    let currentUser = null; // Храним текущего юзера глобально для модуля
+    let currentUser = null; 
 
     // --- Авторизация ---
     btnLogin.addEventListener('click', () => {
@@ -645,7 +720,7 @@
 
     onAuthStateChanged(auth, (user) => {
         loadingDiv.style.display = 'none';
-        currentUser = user; // Обновляем состояние
+        currentUser = user; 
 
         if (user) {
             loggedOutDiv.style.display = 'none';
@@ -661,18 +736,18 @@
             userPhoto.style.backgroundImage = 'none';
         }
         
-        // Перерисовываем посты, чтобы обновить кнопки удаления (свои/чужие)
         loadPosts(currentCategory); 
     });
 
-    // --- Логика ПОСТОВ (Firestore) ---
-    
-    // Категории
+    // --- Логика ПОСТОВ ---
     const categories = ["Все", "Художество", "Одежда", "Мебель", "UI/UX Дизайн", "Типографика", "Архитектура", "3D Моделирование"];
     let currentCategory = "Все";
     const filtersContainer = document.getElementById('category-filters');
     const postsContainer = document.getElementById('posts-feed');
     const postForm = document.getElementById('create-post-form');
+    
+    // Кэш для хранения данных постов (чтобы открывать их)
+    window.postsCache = {};
 
     // Рендер кнопок категорий
     function renderFilters() {
@@ -691,11 +766,10 @@
     }
     renderFilters();
 
-    // Загрузка постов в реальном времени
     let unsubscribe = null;
 
     function loadPosts(category) {
-        if (unsubscribe) unsubscribe(); // Отписываемся от предыдущего слушателя
+        if (unsubscribe) unsubscribe();
 
         const postsRef = collection(db, "posts");
         let q;
@@ -703,9 +777,6 @@
         if (category === "Все") {
             q = query(postsRef, orderBy("timestamp", "desc"));
         } else {
-            // Для фильтрации может потребоваться индекс в Firebase Console, если сортируем и фильтруем одновременно
-            // Пока сделаем простую фильтрацию на клиенте или через составной запрос, если создашь индекс.
-            // Чтобы не усложнять сейчас, используем where. *Возможно потребуется создать индекс по ссылке в ошибке консоли*
             q = query(postsRef, where("category", "==", category), orderBy("timestamp", "desc"));
         }
 
@@ -721,17 +792,21 @@
                 const post = docSnap.data();
                 const postId = docSnap.id;
                 
-                // Проверяем, владелец ли текущий юзер
+                // Сохраняем данные поста в кэш для открытия
+                window.postsCache[postId] = post;
+                
                 const isOwner = currentUser && currentUser.uid === post.userId;
                 
+                // Добавляем event.stopPropagation() чтобы клик по корзине не открывал пост
                 const deleteBtn = isOwner 
-                    ? `<button class="delete-post-btn" onclick="window.deletePost('${postId}')">
+                    ? `<button class="delete-post-btn" onclick="event.stopPropagation(); window.deletePost('${postId}')">
                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                        </button>` 
                     : '';
 
+                // Добавляем onclick на саму карточку
                 const html = `
-                    <div class="post-card">
+                    <div class="post-card" onclick="window.viewPost('${postId}')">
                         <div class="post-header">
                             <div class="post-avatar" style="background-image: url('${post.userPhoto || ''}')"></div>
                             <div class="post-author">${post.userName}</div>
@@ -746,14 +821,9 @@
             });
         }, (error) => {
             console.error("Error fetching posts:", error);
-            // Если ошибка requires an index, выводим в консоль
-            if(error.code === 'failed-precondition') {
-                 console.log("Требуется создание индекса в Firebase. Проверь ссылку в консоли.");
-            }
         });
     }
     
-    // Инициализация загрузки
     loadPosts("Все");
 
     // Создание поста
@@ -761,7 +831,7 @@
         e.preventDefault();
         
         if (!currentUser) {
-            alert("Пожалуйста, войдите в аккаунт (в профиле), чтобы публиковать идеи.");
+            alert("Пожалуйста, войдите в аккаунт, чтобы публиковать идеи.");
             return;
         }
 
@@ -780,9 +850,8 @@
                 timestamp: serverTimestamp()
             });
             
-            // Сброс формы и закрытие
             postForm.reset();
-            window.closeCreateModal();
+            window.closeModal('create-post-modal');
             
         } catch (err) {
             console.error("Error adding post: ", err);
@@ -790,7 +859,6 @@
         }
     });
 
-    // Функция удаления (глобальная, чтобы вызвать из HTML строки)
     window.deletePost = async (id) => {
         if(!confirm("Удалить эту идею?")) return;
         try {
@@ -825,15 +893,29 @@
         document.documentElement.style.setProperty(name, value);
     }
     
-    // Модальное окно
+    // Управление модальными окнами (универсальное)
     window.openCreateModal = function() {
         document.getElementById('create-post-modal').classList.add('open');
     }
     
-    window.closeCreateModal = function(e) {
-        // Если передан event, проверяем клик по фону. Если нет - просто закрываем
+    window.closeModal = function(modalId, e) {
         if (e && e.target !== e.currentTarget) return;
-        document.getElementById('create-post-modal').classList.remove('open');
+        document.getElementById(modalId).classList.remove('open');
+    }
+
+    // Открытие полного поста
+    window.viewPost = function(postId) {
+        const post = window.postsCache[postId];
+        if (!post) return;
+
+        // Заполняем данные
+        document.getElementById('view-title').textContent = post.title;
+        document.getElementById('view-author').textContent = post.userName;
+        document.getElementById('view-category').textContent = post.category;
+        document.getElementById('view-desc').textContent = post.description;
+
+        // Открываем модалку
+        document.getElementById('view-post-modal').classList.add('open');
     }
 </script>
 
