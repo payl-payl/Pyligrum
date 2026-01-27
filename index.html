@@ -11,6 +11,8 @@
             --bg-color: #1a1a2e;
             --primary: #ffffff;
             --accent: #a5b4fc;
+            --like-color: #ff4757;
+            --save-color: #ffa502;
         }
 
         * {
@@ -214,7 +216,6 @@
 
         .post-author { font-size: 14px; font-weight: 600; }
         
-        /* ИСПРАВЛЕНИЕ: Добавил отступ справа, чтобы не наезжало на кнопку удаления и край */
         .post-cat { 
             font-size: 11px; 
             opacity: 0.6; 
@@ -248,13 +249,13 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
+            margin-bottom: 15px;
         }
 
-        /* ИСПРАВЛЕНИЕ: Кнопка удаления сдвинута внутрь карточки */
         .delete-post-btn {
             position: absolute;
-            top: 15px;    /* Было 15px */
-            right: 15px;  /* Было -5px, теперь выровнено по паддингу */
+            top: 15px;
+            right: 15px;
             background: none; border: none;
             color: #ff6b6b;
             cursor: pointer;
@@ -262,6 +263,40 @@
             opacity: 0.7;
             z-index: 2;
         }
+
+        /* --- НОВОЕ: Кнопки действий (Лайк/Сейв) --- */
+        .post-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 10px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            color: white;
+            opacity: 0.6;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .action-btn:hover { background: rgba(255,255,255,0.05); opacity: 1; }
+        
+        .action-btn svg { width: 20px; height: 20px; stroke-width: 2; }
+
+        .action-btn.liked { color: var(--like-color); opacity: 1; }
+        .action-btn.liked svg { fill: var(--like-color); stroke: var(--like-color); }
+        
+        .action-btn.saved { color: var(--save-color); opacity: 1; }
+        .action-btn.saved svg { fill: var(--save-color); stroke: var(--save-color); }
 
         /* FAB Кнопка добавления */
         .fab-add {
@@ -426,6 +461,46 @@
             cursor: pointer;
         }
 
+        /* --- НОВОЕ: Переключатели профиля --- */
+        .profile-tabs {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .profile-tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .profile-tab-btn.active {
+            background: var(--accent);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .profile-feed-container {
+            width: 100%;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-bottom: 80px;
+        }
+
         /* Навигация */
         nav {
             position: relative;
@@ -577,7 +652,7 @@
 
                 <div id="profile-logged-out" class="auth-container" style="display: none;">
                     <h1>Вход</h1>
-                    <p style="text-align: center; opacity: 0.8;">Войдите, чтобы публиковать свои идеи и управлять ими.</p>
+                    <p style="text-align: center; opacity: 0.8;">Войдите, чтобы публиковать свои идеи, лайкать и сохранять.</p>
                     <button id="google-login-btn" class="glass-base google-btn">
                         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                         Войти через Google
@@ -590,6 +665,20 @@
                     <p id="user-email" style="font-size: 12px; opacity: 0.7;">email@example.com</p>
                     <div style="margin-top: 10px; font-size: 14px; opacity: 0.8;">Статус: <span style="color: var(--accent);">Explorer</span></div>
                     
+                    <div class="profile-tabs">
+                        <button class="profile-tab-btn" onclick="window.loadProfilePosts('likes')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            Любимое
+                        </button>
+                        <button class="profile-tab-btn" onclick="window.loadProfilePosts('saves')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            Сохраненное
+                        </button>
+                    </div>
+
+                    <div id="profile-feed-title" style="margin-top:20px; font-size:14px; opacity:0.5;">Выберите категорию выше</div>
+                    <div id="profile-posts-feed" class="profile-feed-container"></div>
+
                     <button id="logout-btn" class="logout-btn">Выйти из аккаунта</button>
                 </div>
             </div>
@@ -682,7 +771,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, serverTimestamp, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // Твой конфиг
     const firebaseConfig = {
@@ -773,15 +862,52 @@
 
     let unsubscribe = null;
 
+    function renderPostHTML(post, postId) {
+        window.postsCache[postId] = post;
+        
+        const isOwner = currentUser && currentUser.uid === post.userId;
+        const deleteBtn = isOwner 
+            ? `<button class="delete-post-btn" onclick="event.stopPropagation(); window.deletePost('${postId}')">
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+               </button>` 
+            : '';
+
+        // Проверка лайков и сохранений
+        const likes = post.likes || [];
+        const saves = post.saves || [];
+        const isLiked = currentUser && likes.includes(currentUser.uid);
+        const isSaved = currentUser && saves.includes(currentUser.uid);
+        
+        return `
+            <div class="post-card" onclick="window.viewPost('${postId}')">
+                <div class="post-header">
+                    <div class="post-avatar" style="background-image: url('${post.userPhoto || ''}')"></div>
+                    <div class="post-author">${post.userName}</div>
+                    <div class="post-cat">${post.category}</div>
+                </div>
+                ${deleteBtn}
+                <div class="post-title">${post.title}</div>
+                <div class="post-desc">${post.description}</div>
+                
+                <div class="post-actions">
+                    <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="event.stopPropagation(); window.toggleInteraction('${postId}', 'like')">
+                        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        ${likes.length > 0 ? likes.length : ''}
+                    </button>
+                    <button class="action-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation(); window.toggleInteraction('${postId}', 'save')">
+                         <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
     function loadPosts(category) {
         if (unsubscribe) unsubscribe();
 
         const postsRef = collection(db, "posts");
         let q;
 
-        // ЛОГИКА ФИЛЬТРАЦИИ:
-        // Если выбрано "Все", берем все посты.
-        // Если выбрана конкретная категория, добавляем фильтр where
         if (category === "Все") {
             q = query(postsRef, orderBy("timestamp", "desc"));
         } else {
@@ -797,31 +923,7 @@
             }
 
             snapshot.forEach((docSnap) => {
-                const post = docSnap.data();
-                const postId = docSnap.id;
-                
-                window.postsCache[postId] = post;
-                
-                const isOwner = currentUser && currentUser.uid === post.userId;
-                
-                const deleteBtn = isOwner 
-                    ? `<button class="delete-post-btn" onclick="event.stopPropagation(); window.deletePost('${postId}')">
-                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                       </button>` 
-                    : '';
-
-                const html = `
-                    <div class="post-card" onclick="window.viewPost('${postId}')">
-                        <div class="post-header">
-                            <div class="post-avatar" style="background-image: url('${post.userPhoto || ''}')"></div>
-                            <div class="post-author">${post.userName}</div>
-                            <div class="post-cat">${post.category}</div>
-                        </div>
-                        ${deleteBtn}
-                        <div class="post-title">${post.title}</div>
-                        <div class="post-desc">${post.description}</div>
-                    </div>
-                `;
+                const html = renderPostHTML(docSnap.data(), docSnap.id);
                 postsContainer.insertAdjacentHTML('beforeend', html);
             });
         }, (error) => {
@@ -831,8 +933,73 @@
             }
         });
     }
-                
 
+    // Логика ЛАЙКОВ и СОХРАНЕНИЙ
+    window.toggleInteraction = async (postId, type) => {
+        if (!currentUser) {
+            alert("Пожалуйста, войдите, чтобы лайкать и сохранять идеи.");
+            return;
+        }
+
+        const postRef = doc(db, "posts", postId);
+        const post = window.postsCache[postId];
+        const field = type === 'like' ? 'likes' : 'saves';
+        const arr = post[field] || [];
+        const isAdded = arr.includes(currentUser.uid);
+
+        try {
+            if (isAdded) {
+                await updateDoc(postRef, {
+                    [field]: arrayRemove(currentUser.uid)
+                });
+            } else {
+                await updateDoc(postRef, {
+                    [field]: arrayUnion(currentUser.uid)
+                });
+            }
+            // onSnapshot сам обновит UI
+        } catch (err) {
+            console.error("Error toggling:", err);
+        }
+    }
+
+    // Логика Профиля (Лайкнутые и Сохраненные)
+    let profileUnsubscribe = null;
+    
+    window.loadProfilePosts = (type) => {
+        if (!currentUser) return;
+        
+        const container = document.getElementById('profile-posts-feed');
+        const titleDiv = document.getElementById('profile-feed-title');
+        
+        // Визуальное обновление кнопок
+        document.querySelectorAll('.profile-tab-btn').forEach(btn => btn.classList.remove('active'));
+        if (type === 'likes') document.querySelectorAll('.profile-tab-btn')[0].classList.add('active');
+        if (type === 'saves') document.querySelectorAll('.profile-tab-btn')[1].classList.add('active');
+
+        titleDiv.textContent = type === 'likes' ? "Идеи, которые вам понравились:" : "Идеи, которые вы сохранили:";
+        container.innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px;">Загрузка...</div>';
+
+        if (profileUnsubscribe) profileUnsubscribe();
+
+        const postsRef = collection(db, "posts");
+        // Запрос: posts где в массиве likes/saves есть мой ID
+        const field = type; // 'likes' or 'saves'
+        const q = query(postsRef, where(field, "array-contains", currentUser.uid));
+
+        profileUnsubscribe = onSnapshot(q, (snapshot) => {
+            container.innerHTML = '';
+            if (snapshot.empty) {
+                container.innerHTML = '<div style="text-align:center; opacity:0.5; padding:20px;">Список пуст</div>';
+                return;
+            }
+            snapshot.forEach(docSnap => {
+                const html = renderPostHTML(docSnap.data(), docSnap.id);
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        });
+    };
+                
     // Создание поста
     postForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -854,7 +1021,9 @@
                 userId: currentUser.uid,
                 userName: currentUser.displayName || "Аноним",
                 userPhoto: currentUser.photoURL,
-                timestamp: serverTimestamp()
+                timestamp: serverTimestamp(),
+                likes: [],
+                saves: []
             });
             
             postForm.reset();
