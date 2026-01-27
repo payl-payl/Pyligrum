@@ -223,7 +223,7 @@
             padding: 2px 6px; 
             border-radius: 4px; 
             margin-left: auto;
-            margin-right: 35px; /* Сдвиг влево */
+            margin-right: 70px; /* Увеличил отступ для кнопок */
         }
         
         .post-title { 
@@ -252,19 +252,30 @@
             margin-bottom: 15px;
         }
 
-        .delete-post-btn {
+        /* Кнопки управления (удалить / редактировать) */
+        .post-controls {
             position: absolute;
             top: 15px;
             right: 15px;
-            background: none; border: none;
-            color: #ff6b6b;
-            cursor: pointer;
-            padding: 0;
-            opacity: 0.7;
+            display: flex;
+            gap: 10px;
             z-index: 2;
         }
 
-        /* --- НОВОЕ: Кнопки действий (Лайк/Сейв) --- */
+        .control-btn {
+            background: none; border: none;
+            cursor: pointer;
+            padding: 0;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        
+        .control-btn:hover { opacity: 1; }
+        
+        .delete-btn { color: #ff6b6b; }
+        .edit-btn { color: #ffffff; }
+
+        /* Кнопки действий (Лайк/Сейв) */
         .post-actions {
             display: flex;
             gap: 15px;
@@ -461,7 +472,7 @@
             cursor: pointer;
         }
 
-        /* --- НОВОЕ: Переключатели профиля --- */
+        /* Переключатели профиля */
         .profile-tabs {
             display: flex;
             gap: 10px;
@@ -753,6 +764,35 @@
         </div>
     </div>
 
+    <div id="edit-post-modal" class="modal-overlay" onclick="window.closeModal('edit-post-modal', event)">
+        <div class="modal-content glass-base">
+            <h2 style="margin-top:0">Редактирование</h2>
+            <form id="edit-post-form">
+                <div class="form-group">
+                    <label class="form-label">Заголовок</label>
+                    <input type="text" id="edit-post-title" class="form-input" required maxlength="40">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Категория</label>
+                    <select id="edit-post-category" class="form-select">
+                        <option value="Художество">Художество</option>
+                        <option value="Одежда">Одежда</option>
+                        <option value="Мебель">Мебель</option>
+                        <option value="UI/UX Дизайн">UI/UX Дизайн</option>
+                        <option value="Типографика">Типографика</option>
+                        <option value="Архитектура">Архитектура</option>
+                        <option value="3D Моделирование">3D Моделирование</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Описание</label>
+                    <textarea id="edit-post-desc" class="form-textarea" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+
     <div id="view-post-modal" class="modal-overlay" onclick="window.closeModal('view-post-modal', event)">
         <div class="modal-content glass-base" style="height: 80vh;">
             <div class="view-scroll-area">
@@ -839,9 +879,11 @@
     const filtersContainer = document.getElementById('category-filters');
     const postsContainer = document.getElementById('posts-feed');
     const postForm = document.getElementById('create-post-form');
+    const editForm = document.getElementById('edit-post-form');
     
     // Кэш для хранения данных постов (чтобы открывать их)
     window.postsCache = {};
+    let currentEditingPostId = null;
 
     // Рендер кнопок категорий
     function renderFilters() {
@@ -866,11 +908,21 @@
         window.postsCache[postId] = post;
         
         const isOwner = currentUser && currentUser.uid === post.userId;
-        const deleteBtn = isOwner 
-            ? `<button class="delete-post-btn" onclick="event.stopPropagation(); window.deletePost('${postId}')">
-                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-               </button>` 
-            : '';
+        
+        // Кнопки управления (Удалить + Редактировать)
+        let controls = '';
+        if (isOwner) {
+            controls = `
+                <div class="post-controls">
+                    <button class="control-btn edit-btn" onclick="event.stopPropagation(); window.openEditModal('${postId}')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    <button class="control-btn delete-btn" onclick="event.stopPropagation(); window.deletePost('${postId}')">
+                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            `;
+        }
 
         // Проверка лайков и сохранений
         const likes = post.likes || [];
@@ -885,7 +937,7 @@
                     <div class="post-author">${post.userName}</div>
                     <div class="post-cat">${post.category}</div>
                 </div>
-                ${deleteBtn}
+                ${controls}
                 <div class="post-title">${post.title}</div>
                 <div class="post-desc">${post.description}</div>
                 
@@ -957,7 +1009,6 @@
                     [field]: arrayUnion(currentUser.uid)
                 });
             }
-            // onSnapshot сам обновит UI
         } catch (err) {
             console.error("Error toggling:", err);
         }
@@ -1034,6 +1085,50 @@
             alert("Ошибка публикации: " + err.message);
         }
     });
+
+    // --- РЕДАКТИРОВАНИЕ ---
+    
+    // Открытие модалки редактирования
+    window.openEditModal = (postId) => {
+        const post = window.postsCache[postId];
+        if (!post) return;
+        
+        currentEditingPostId = postId;
+        
+        document.getElementById('edit-post-title').value = post.title;
+        document.getElementById('edit-post-category').value = post.category;
+        document.getElementById('edit-post-desc').value = post.description;
+        
+        document.getElementById('edit-post-modal').classList.add('open');
+    }
+
+    // Сохранение изменений
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!currentEditingPostId || !currentUser) return;
+        
+        const newTitle = document.getElementById('edit-post-title').value;
+        const newCategory = document.getElementById('edit-post-category').value;
+        const newDesc = document.getElementById('edit-post-desc').value;
+        
+        try {
+            const postRef = doc(db, "posts", currentEditingPostId);
+            await updateDoc(postRef, {
+                title: newTitle,
+                category: newCategory,
+                description: newDesc
+            });
+            
+            window.closeModal('edit-post-modal');
+            currentEditingPostId = null;
+            
+        } catch (err) {
+            console.error("Error updating: ", err);
+            alert("Ошибка обновления: " + err.message);
+        }
+    });
+
 
     window.deletePost = async (id) => {
         if(!confirm("Удалить эту идею?")) return;
