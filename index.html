@@ -806,12 +806,39 @@
             <button class="btn-submit btn-close-view" onclick="window.closeModal('view-post-modal', null)">Закрыть</button>
         </div>
     </div>
+
+    <div id="user-profile-modal" class="modal-overlay" onclick="window.closeModal('user-profile-modal', event)">
+        <div class="modal-content glass-base" style="height: 90vh;">
+            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+                <div id="target-user-photo" class="user-avatar glass-base" style="width: 80px; height: 80px;"></div>
+                <h2 id="target-user-name" style="margin-bottom: 5px;">User Name</h2>
+                
+                <div style="display: flex; gap: 15px; font-size: 14px; opacity: 0.8; margin-bottom: 15px;">
+                    <div><span id="target-followers-count" style="color: var(--accent); font-weight: bold;">0</span> Подписчиков</div>
+                </div>
+
+                <button id="follow-btn" class="glass-base" style="padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.3s; border: 1px solid var(--accent); color: white; background: transparent;">
+                    Подписаться
+                </button>
+            </div>
+
+            <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; padding-bottom: 5px; opacity: 0.5; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
+                Публикации
+            </div>
+
+            <div id="target-user-feed" class="posts-feed" style="padding-bottom: 20px; overflow-y: auto;">
+                </div>
+            
+            <button class="btn-submit btn-close-view" onclick="window.closeModal('user-profile-modal', null)">Закрыть</button>
+        </div>
+    </div>
+
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, serverTimestamp, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, serverTimestamp, updateDoc, arrayUnion, arrayRemove, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // Твой конфиг
     const firebaseConfig = {
@@ -852,7 +879,7 @@
         signOut(auth).then(() => console.log("Signed out"));
     });
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         loadingDiv.style.display = 'none';
         currentUser = user; 
 
@@ -864,6 +891,16 @@
             if (user.photoURL) {
                 userPhoto.style.backgroundImage = `url('${user.photoURL}')`;
             }
+
+            // !!! НОВОЕ: Сохраняем пользователя в коллекцию users для подписок
+            const userRef = doc(db, "users", user.uid);
+            await setDoc(userRef, {
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                email: user.email,
+                lastSeen: serverTimestamp()
+            }, { merge: true }); // merge: true не перезапишет подписчиков
+
         } else {
             loggedInDiv.style.display = 'none';
             loggedOutDiv.style.display = 'flex';
@@ -930,11 +967,12 @@
         const isLiked = currentUser && likes.includes(currentUser.uid);
         const isSaved = currentUser && saves.includes(currentUser.uid);
         
+        // !!! НОВОЕ: Добавлены onclick events к post-avatar и post-author
         return `
             <div class="post-card" onclick="window.viewPost('${postId}')">
                 <div class="post-header">
-                    <div class="post-avatar" style="background-image: url('${post.userPhoto || ''}')"></div>
-                    <div class="post-author">${post.userName}</div>
+                    <div class="post-avatar" style="background-image: url('${post.userPhoto || ''}'); cursor: pointer;" onclick="event.stopPropagation(); window.openUserProfile('${post.userId}')"></div>
+                    <div class="post-author" style="cursor: pointer;" onclick="event.stopPropagation(); window.openUserProfile('${post.userId}')">${post.userName}</div>
                     <div class="post-cat">${post.category}</div>
                 </div>
                 ${controls}
@@ -1138,6 +1176,128 @@
             alert("Ошибка удаления: " + err.message);
         }
     }
+
+    // --- ПРОСМОТР ЧУЖОГО ПРОФИЛЯ ---
+    
+    let currentTargetUser = null;
+    let targetFeedUnsubscribe = null;
+
+    window.openUserProfile = async (targetUserId) => {
+        // Если кликнули на себя - переходим в таб "Профиль"
+        if (currentUser && targetUserId === currentUser.uid) {
+            window.showScreen('profile', document.querySelectorAll('.nav-item')[2]);
+            return;
+        }
+
+        currentTargetUser = targetUserId;
+        const modal = document.getElementById('user-profile-modal');
+        const nameEl = document.getElementById('target-user-name');
+        const photoEl = document.getElementById('target-user-photo');
+        const followBtn = document.getElementById('follow-btn');
+        const followersCountEl = document.getElementById('target-followers-count');
+        const feedContainer = document.getElementById('target-user-feed');
+
+        // Очистка UI
+        nameEl.textContent = "Загрузка...";
+        photoEl.style.backgroundImage = "none";
+        followersCountEl.textContent = "-";
+        feedContainer.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка постов...</div>';
+        followBtn.style.display = 'none'; // Скрываем кнопку пока не загрузим данные
+        modal.classList.add('open');
+
+        try {
+            // 1. Получаем данные пользователя
+            const userDocRef = doc(db, "users", targetUserId);
+            const userSnap = await getDoc(userDocRef);
+            
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                nameEl.textContent = userData.displayName;
+                photoEl.style.backgroundImage = `url('${userData.photoURL}')`;
+                
+                const followers = userData.followers || [];
+                followersCountEl.textContent = followers.length;
+
+                // Настройка кнопки подписки
+                if (currentUser) {
+                    followBtn.style.display = 'block';
+                    const isFollowing = followers.includes(currentUser.uid);
+                    updateFollowButtonState(isFollowing);
+                    
+                    followBtn.onclick = () => window.toggleFollow(targetUserId);
+                }
+            } else {
+                nameEl.textContent = "Пользователь не найден";
+            }
+
+            // 2. Загружаем посты пользователя
+            if (targetFeedUnsubscribe) targetFeedUnsubscribe();
+            
+            const q = query(collection(db, "posts"), where("userId", "==", targetUserId), orderBy("timestamp", "desc"));
+            targetFeedUnsubscribe = onSnapshot(q, (snapshot) => {
+                feedContainer.innerHTML = '';
+                if (snapshot.empty) {
+                    feedContainer.innerHTML = '<div style="text-align:center; opacity:0.5;">У пользователя нет идей.</div>';
+                    return;
+                }
+                snapshot.forEach(docSnap => {
+                    const html = renderPostHTML(docSnap.data(), docSnap.id);
+                    feedContainer.insertAdjacentHTML('beforeend', html);
+                });
+            });
+
+        } catch (err) {
+            console.error("Error opening profile:", err);
+            // Если ошибка (например нет индекса), пробуем достать имя из поста
+            nameEl.textContent = "Ошибка / Требуется индекс";
+        }
+    };
+
+    function updateFollowButtonState(isFollowing) {
+        const btn = document.getElementById('follow-btn');
+        if (isFollowing) {
+            btn.textContent = "Вы подписаны";
+            btn.style.background = "var(--accent)";
+            btn.style.color = "#000";
+        } else {
+            btn.textContent = "Подписаться";
+            btn.style.background = "transparent";
+            btn.style.color = "white";
+        }
+    }
+
+    window.toggleFollow = async (targetUserId) => {
+        if (!currentUser) return;
+        const btn = document.getElementById('follow-btn');
+        const userRef = doc(db, "users", targetUserId);
+        
+        // Оптимистичное обновление UI
+        const isCurrentlyFollowing = btn.textContent === "Вы подписаны";
+        updateFollowButtonState(!isCurrentlyFollowing);
+        
+        try {
+            if (isCurrentlyFollowing) {
+                // Отписаться
+                await updateDoc(userRef, {
+                    followers: arrayRemove(currentUser.uid)
+                });
+            } else {
+                // Подписаться
+                await updateDoc(userRef, {
+                    followers: arrayUnion(currentUser.uid)
+                });
+            }
+            // Обновляем счетчик
+            const snap = await getDoc(userRef);
+            if(snap.exists()) {
+                document.getElementById('target-followers-count').textContent = (snap.data().followers || []).length;
+            }
+        } catch (err) {
+            console.error("Follow error:", err);
+            updateFollowButtonState(isCurrentlyFollowing); // Откат
+            alert("Ошибка подписки");
+        }
+    };
 
 </script>
 
