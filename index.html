@@ -1340,8 +1340,9 @@
             const querySnapshot = await getDocs(q);
 
             const batch = writeBatch(db);
-            querySnapshot.forEach((doc) => {
-                batch.update(doc.ref, { userName: newName });
+            // Исправлено: переименовали doc в postSnapshot, чтобы не было конфликта с функцией doc()
+            querySnapshot.forEach((postSnapshot) => {
+                batch.update(postSnapshot.ref, { userName: newName });
             });
             await batch.commit();
 
